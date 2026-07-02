@@ -113,7 +113,7 @@
   const allMonths=[...new Set(events.map(e=>e.date.slice(0,7)))].sort();
   let currentMonth=allMonths[0];
   function unique(arr){return [...new Set(arr.filter(Boolean))].sort((a,b)=>a.localeCompare(b));}
-  const distanceOrder={'1500':0.93,'1600':0.99,'Mile':1,'5K':3.1,'4M':4,'5M':5,'10K':6.2,'9M':9,'15K':9.32,'10M':10,'12M':12,'Half':13.1,'18M':18,'Marathon':26.2,'Ultra':50,'Relay':90,'Track':91,'XC':92,'Trail':93,'Other':99};
+  const distanceOrder={'1500':0.93,'1600':0.99,'Mile':1,'5K':3.1,'4M':4,'5M':5,'10K':6.2,'9M':9,'15K':9.32,'10M':10,'12M':12,'Half':13.1,'18M':18,'Marathon':26.2,'Ultra':50,'Relay':90,'Track':91,'XC':92,'Trail':93,'Unsanctioned':94,'Other':99};
   function sortDistances(values){return [...new Set(values.filter(Boolean))].sort((a,b)=>(distanceOrder[a]||50)-(distanceOrder[b]||50)||a.localeCompare(b));}
   function sortLocations(values){return [...new Set(values.filter(Boolean))].sort((a,b)=>{if(a==='Other')return 1;if(b==='Other')return -1;return a.localeCompare(b);});}
   const organizerCounts=new Map();events.forEach(e=>{if(e.organizer)organizerCounts.set(e.organizer,(organizerCounts.get(e.organizer)||0)+1);});
