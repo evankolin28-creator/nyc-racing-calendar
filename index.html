@@ -179,7 +179,7 @@
       els.favoritesOnly.checked=false;
       els.favoritesNote.textContent='Select a race to view details and add it to My Races. Log in to sync saved races across devices.';
     }else{
-      els.favoritesNote.textContent=`Select a race to view details and add it to My Races. ${favoriteIds.size} saved ${favoriteIds.size===1?'race':'races'}.`;
+      els.favoritesNote.textContent=`Select a race to view details and add it to My Races. ${favoriteIds.size} ${favoriteIds.size===1?'race':'races'} currently saved.`;
     }
   }
   async function loadFavorites(){
@@ -207,7 +207,20 @@
     updateAuthUI();render();
     if(els.modal.classList.contains('open')){
       const dateStr=els.modal.dataset.date;
-      if(dateStr) openDay(dateStr,filtered().filter(e=>e.date===dateStr));
+      let modalRaceIds=[];
+      try{
+        modalRaceIds=JSON.parse(els.modal.dataset.raceIds||'[]');
+      }catch(_error){
+        modalRaceIds=[];
+      }
+
+      const modalItems=events
+        .filter(e=>modalRaceIds.includes(e.id))
+        .sort((a,b)=>(a.sortOrder??999)-(b.sortOrder??999)||a.name.localeCompare(b.name));
+
+      if(dateStr&&modalItems.length){
+        openDay(dateStr,modalItems);
+      }
     }
   }
   function myRacesActionButton(e){
@@ -313,7 +326,11 @@
     return card;
   }
   function openDay(dateStr,items){
-    const d=new Date(dateStr+'T12:00:00');els.modal.dataset.date=dateStr;els.modalTitle.textContent=dayFmt.format(d);els.modalSub.textContent=items.length+' '+(items.length===1?'race':'races');els.modalBody.innerHTML='';
+    items=[...items].sort((a,b)=>(a.sortOrder??999)-(b.sortOrder??999)||a.name.localeCompare(b.name));
+    const d=new Date(dateStr+'T12:00:00');
+    els.modal.dataset.date=dateStr;
+    els.modal.dataset.raceIds=JSON.stringify(items.map(e=>e.id));
+    els.modalTitle.textContent=dayFmt.format(d);els.modalSub.textContent=items.length+' '+(items.length===1?'race':'races');els.modalBody.innerHTML='';
     items.forEach(e=>{const box=document.createElement('div');box.className='detail';box.style.setProperty('--org',e.color||'#64748B');if(e.organizer){const pill=document.createElement('span');pill.className='org-pill'+(e.organizer==='Queens Distance Runners'?' yellow':'');pill.style.setProperty('--org',e.color||'#64748B');pill.textContent=e.organizer;box.appendChild(pill);}const head=document.createElement('div');head.className='detail-head';const h=document.createElement('h3');h.textContent=e.name;head.appendChild(h);box.appendChild(head);const p1=document.createElement('p');p1.textContent=[e.distance,e.location,e.borough].filter(Boolean).join(' • ');box.appendChild(p1);if(e.notes){const p2=document.createElement('p');p2.textContent=e.notes;box.appendChild(p2);}if(e.status){const p3=document.createElement('p');const strong=document.createElement('strong');strong.textContent='Status: ';p3.appendChild(strong);p3.appendChild(document.createTextNode(e.status));box.appendChild(p3);}box.appendChild(myRacesActionButton(e));if(e.registrationUrl){const reg=document.createElement('a');reg.className='register';reg.href=e.registrationUrl;reg.target='_blank';reg.rel='noopener';reg.textContent='Register / details';box.appendChild(reg);}els.modalBody.appendChild(box);});els.modal.classList.add('open');
   }
   function render(){
