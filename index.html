@@ -228,23 +228,13 @@
     closeAuth();
   });
 
-  const {data:{session:initialSession}}=await supabaseClient.auth.getSession();
-  session=initialSession;
-  updateAuthUI();
-  await loadFavorites();
-  supabaseClient.auth.onAuthStateChange(async(_event,newSession)=>{
-    session=newSession;
-    if(session?.user){
-      await loadFavorites();
-      if(pendingFavoriteId&&!favoriteIds.has(pendingFavoriteId)){const id=pendingFavoriteId;pendingFavoriteId=null;await toggleFavorite(id);}
-      else pendingFavoriteId=null;
-    }else{favoriteIds=new Set();updateAuthUI();render();}
-  });
-
   const monthFmt=new Intl.DateTimeFormat('en-US',{month:'long',year:'numeric'});
   const dayFmt=new Intl.DateTimeFormat('en-US',{weekday:'long',month:'long',day:'numeric'});
   const allMonths=[...new Set(events.map(e=>e.date.slice(0,7)))].sort();
-  let currentMonth=allMonths[0]||new Date().toISOString().slice(0,7);
+  const todayMonth=new Date().toISOString().slice(0,7);
+  let currentMonth=allMonths.includes(todayMonth)
+    ? todayMonth
+    : (allMonths.find(month=>month>todayMonth)||allMonths[0]||todayMonth);
   function unique(arr){return [...new Set(arr.filter(Boolean))].sort((a,b)=>a.localeCompare(b));}
   const distanceOrder={'1500':0.93,'1600':0.99,'Mile':1,'1M':1,'2M':2,'3M':3,'5K':3.1,'4M':4,'5M':5,'10K':6.2,'9M':9,'15K':9.32,'10M':10,'12M':12,'17M':17,'Half':13.1,'18M':18,'Marathon':26.2,'Ultra':50,'Relay':90,'Track':91,'XC':92,'Trail':93,'Unsanctioned':94,'Other':99};
   function sortDistances(values){return [...new Set(values.filter(Boolean))].sort((a,b)=>(distanceOrder[a]||50)-(distanceOrder[b]||50)||a.localeCompare(b));}
@@ -289,7 +279,33 @@
   els.next.addEventListener('click',()=>{const i=allMonths.indexOf(currentMonth);if(i<allMonths.length-1){currentMonth=allMonths[i+1];els.month.value='';render();}});
   document.querySelectorAll('[data-close]').forEach(x=>x.addEventListener('click',()=>els.modal.classList.remove('open')));
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){els.modal.classList.remove('open');closeAuth();}});
+
+  // Render the public calendar first. Authentication is optional and should
+  // never block race data, filters, or month navigation from appearing.
   render();
+
+  const {data:{session:initialSession}}=await supabaseClient.auth.getSession();
+  session=initialSession;
+  updateAuthUI();
+  await loadFavorites();
+
+  supabaseClient.auth.onAuthStateChange(async(_event,newSession)=>{
+    session=newSession;
+    if(session?.user){
+      await loadFavorites();
+      if(pendingFavoriteId&&!favoriteIds.has(pendingFavoriteId)){
+        const id=pendingFavoriteId;
+        pendingFavoriteId=null;
+        await toggleFavorite(id);
+      }else{
+        pendingFavoriteId=null;
+      }
+    }else{
+      favoriteIds=new Set();
+      updateAuthUI();
+      render();
+    }
+  });
 })();
 </script>
 </body>
