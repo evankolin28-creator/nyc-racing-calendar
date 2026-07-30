@@ -127,7 +127,7 @@ try {
         notes: row.notes || '',
         color: row.color || '#64748B',
         date: row.date || '',
-        id: row.id || '',
+        id: row.race_id || '',
         sortOrder: row.sortOrder ? Number(row.sortOrder) : undefined
       }))
       .filter(e => e.name && e.date)
