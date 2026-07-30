@@ -175,9 +175,12 @@
     const user=session?.user;
     els.openAuth.hidden=Boolean(user);els.accountLabel.hidden=!user;els.logout.hidden=!user;
     els.accountLabel.textContent=user?user.email:'';
-    els.favoritesOnly.disabled=!user;
-    if(!user){els.favoritesOnly.checked=false;els.favoritesNote.textContent='Select a race to view details and add it to My Races. Log in to sync saved races across devices.';}
-    else{els.favoritesNote.textContent=`${favoriteIds.size} saved ${favoriteIds.size===1?'race':'races'}`;}
+    if(!user){
+      els.favoritesOnly.checked=false;
+      els.favoritesNote.textContent='Select a race to view details and add it to My Races. Log in to sync saved races across devices.';
+    }else{
+      els.favoritesNote.textContent=`Select a race to view details and add it to My Races. ${favoriteIds.size} saved ${favoriteIds.size===1?'race':'races'}.`;
+    }
   }
   async function loadFavorites(){
     favoriteIds=new Set();
@@ -324,7 +327,21 @@
     else els.empty.textContent='No races match the current filters.';
   }
 
-  [els.search,els.organizer,els.month,els.distance,els.borough,els.favoritesOnly].forEach(el=>el.addEventListener('input',()=>{if(el===els.month&&els.month.value)currentMonth=els.month.value;render();}));
+  [els.search,els.organizer,els.month,els.distance,els.borough].forEach(el=>el.addEventListener('input',()=>{
+    if(el===els.month&&els.month.value)currentMonth=els.month.value;
+    render();
+  }));
+
+  els.favoritesOnly.addEventListener('change',()=>{
+    if(!session?.user){
+      els.favoritesOnly.checked=false;
+      pendingFavoriteId=null;
+      setAuthMode('login');
+      openAuth('Log in or create an account to view and save races in My Races.');
+      return;
+    }
+    render();
+  });
   els.prev.addEventListener('click',()=>{const i=allMonths.indexOf(currentMonth);if(i>0){currentMonth=allMonths[i-1];els.month.value='';render();}});
   els.next.addEventListener('click',()=>{const i=allMonths.indexOf(currentMonth);if(i<allMonths.length-1){currentMonth=allMonths[i+1];els.month.value='';render();}});
   document.querySelectorAll('[data-close]').forEach(x=>x.addEventListener('click',()=>els.modal.classList.remove('open')));
