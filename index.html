@@ -44,6 +44,9 @@
   .date-num{font-size:15px}
   .panel{left:8px;right:8px;top:8px;bottom:8px;width:auto;border-radius:20px}
 }
+
+.auth-bar{margin-top:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}.auth-button{appearance:none;border:1px solid #d7d3cc;background:#fff;color:#1f2937;border-radius:999px;padding:8px 12px;font:inherit;font-size:13px;font-weight:900;cursor:pointer}.auth-button:hover{border-color:var(--accent);color:var(--accent)}.auth-button.primary{background:#171717;color:#fff;border-color:#171717}.auth-button.primary:hover{background:var(--accent);border-color:var(--accent);color:#fff}.account-label{font-size:13px;color:#57534e;font-weight:750;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.favorites-row{margin-top:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}.favorites-toggle{display:inline-flex;align-items:center;gap:8px;border:1px solid #d7d3cc;background:#fff;border-radius:999px;padding:8px 12px;font-size:13px;font-weight:900;cursor:pointer}.favorites-toggle input{width:16px;height:16px;accent-color:var(--accent)}.favorites-note{font-size:12px;color:#78716c}.event{padding-right:36px}.event-link{display:block;color:inherit;text-decoration:none}.favorite-button{position:absolute;right:7px;top:6px;z-index:2;appearance:none;border:0;background:rgba(255,255,255,.92);border-radius:999px;width:27px;height:27px;padding:0;font-size:20px;line-height:27px;color:#78716c;cursor:pointer}.favorite-button:hover{transform:scale(1.08);color:#b7791f}.favorite-button.is-favorite{color:#f4b400}.favorite-button:disabled{cursor:wait;opacity:.55}.detail-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.detail-head h3{flex:1}.detail-favorite{position:static;flex:0 0 auto;border:1px solid #e5e7eb;background:#fff}.auth-panel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(430px,calc(100% - 32px));background:#fff;border-radius:24px;box-shadow:0 30px 80px rgba(0,0,0,.25);overflow:hidden}.auth-panel-head{padding:20px 20px 14px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:16px}.auth-panel-body{padding:20px}.auth-tabs{display:flex;gap:8px;margin-bottom:16px}.auth-tab{flex:1;border:1px solid #d7d3cc;background:#fff;border-radius:999px;padding:9px;font-weight:900;cursor:pointer}.auth-tab.active{background:#171717;color:#fff;border-color:#171717}.auth-form{display:grid;gap:12px}.auth-form label{font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:#78716c;font-weight:900}.auth-form input{width:100%;border:1px solid #d7d3cc;border-radius:14px;padding:11px 12px;font:inherit}.auth-message{min-height:20px;margin-top:12px;font-size:13px;color:#57534e}.auth-message.error{color:#b91c1c}.auth-message.success{color:#047857}.auth-help{margin-top:12px;font-size:12px;color:#78716c}.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:2000;background:#171717;color:#fff;border-radius:999px;padding:10px 14px;font-size:13px;font-weight:800;box-shadow:0 12px 30px rgba(0,0,0,.2);display:none}.toast.show{display:block}
+@media (max-width:640px){.auth-bar{align-items:stretch}.account-label{max-width:100%;width:100%}.favorites-row{align-items:flex-start}.favorites-note{width:100%}.favorite-button{right:8px;top:7px}}
 </style>
 </head>
 <body>
@@ -63,6 +66,11 @@
   </a>
   to stay up to date as races are added. DM on IG or email runnersofnycblog@gmail.com for additions / suggested edits
 </div>
+      <div class="auth-bar" aria-label="Account controls">
+        <button class="auth-button primary" id="openAuth" type="button">Log in / Create account</button>
+        <span class="account-label" id="accountLabel" hidden></span>
+        <button class="auth-button" id="logout" type="button" hidden>Log out</button>
+      </div>
     </header>
     <section class="controls" aria-label="Calendar filters">
       <div class="filter-grid">
@@ -71,6 +79,10 @@
         <div class="field"><label for="month">Month</label><select id="month"></select></div>
         <div class="field"><label for="distance">Distance</label><select id="distance"></select></div>
         <div class="field"><label for="borough">Location</label><select id="borough"></select></div>
+      </div>
+      <div class="favorites-row">
+        <label class="favorites-toggle"><input id="favoritesOnly" type="checkbox" /> My Races</label>
+        <span class="favorites-note" id="favoritesNote">Log in to save races and sync them across devices.</span>
       </div>
     </section>
     <section class="nav" aria-label="Month navigation">
@@ -93,100 +105,190 @@
     <div class="panel-body" id="modalBody"></div>
   </aside>
 </div>
+<div class="modal" id="authModal" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+  <div class="backdrop" data-auth-close></div>
+  <section class="auth-panel">
+    <div class="auth-panel-head"><div><div class="panel-title" id="authTitle">Your race calendar</div><div class="panel-sub">Accounts are optional and only needed to save races.</div></div><button class="close" type="button" data-auth-close aria-label="Close">×</button></div>
+    <div class="auth-panel-body">
+      <div class="auth-tabs"><button class="auth-tab active" id="loginTab" type="button">Log in</button><button class="auth-tab" id="signupTab" type="button">Create account</button></div>
+      <form class="auth-form" id="authForm">
+        <div><label for="authEmail">Email</label><input id="authEmail" type="email" autocomplete="email" required /></div>
+        <div><label for="authPassword">Password</label><input id="authPassword" type="password" autocomplete="current-password" minlength="6" required /></div>
+        <button class="auth-button primary" id="authSubmit" type="submit">Log in</button>
+      </form>
+      <div class="auth-message" id="authMessage" aria-live="polite"></div>
+      <div class="auth-help">You can continue using the full calendar without an account.</div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (async function(){
-const GOOGLE_SHEET_URL =
-  'https://docs.google.com/spreadsheets/d/e/2PACX-1vQXPhov2Cp7_6VIVEJrz9K018Uig9i2ytL5EiBREUjOK75IGvh4CrtbXBXUouYAqm1PbfvOtuQqJzbV/pub?output=csv';
+  const GOOGLE_SHEET_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vQXPhov2Cp7_6VIVEJrz9K018Uig9i2ytL5EiBREUjOK75IGvh4CrtbXBXUouYAqm1PbfvOtuQqJzbV/pub?output=csv';
+  const SUPABASE_URL='https://sxmjnqjbjjrkdkdssewy.supabase.co';
+  const SUPABASE_PUBLISHABLE_KEY='sb_publishable_Im-WRVXfXl4d83rc4YhGZA_2vEi7C87';
+  const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 
-let payload;
+  let payload;
+  try{
+    const response=await fetch(GOOGLE_SHEET_URL,{cache:'no-store'});
+    if(!response.ok) throw new Error('Could not load Google Sheet');
+    const parsed=Papa.parse(await response.text(),{header:true,skipEmptyLines:true});
+    payload={lastUpdated:'July 27, 2026',events:parsed.data
+      .filter(row=>String(row.hidden||'').toUpperCase()!=='TRUE')
+      .map(row=>({
+        name:row.name||'',distance:row.distance||'',location:row.location||'',borough:row.borough||'',organizer:row.organizer||'',status:row.status||'',registrationUrl:row.registrationUrl||'',notes:row.notes||'',color:row.color||'#64748B',date:row.date||'',id:row.race_id||'',sortOrder:row.sortOrder?Number(row.sortOrder):undefined
+      })).filter(e=>e.name&&e.date)};
+  }catch(error){
+    console.error('Unable to load Google Sheet.',error);
+    payload={lastUpdated:'',events:[],loadFailed:true};
+  }
 
-try {
-  const response = await fetch(GOOGLE_SHEET_URL, { cache: 'no-store' });
-  if (!response.ok) throw new Error('Could not load Google Sheet');
+  const events=payload.events.map(e=>({...e,dateObj:new Date(e.date+'T12:00:00')}));
+  const missingIds=events.filter(e=>!e.id);
+  if(missingIds.length) console.warn('Races missing race_id:',missingIds.map(e=>e.name));
 
-  const csv = await response.text();
+  const els={
+    lastUpdated:document.getElementById('lastUpdated'),search:document.getElementById('search'),organizer:document.getElementById('organizer'),month:document.getElementById('month'),distance:document.getElementById('distance'),borough:document.getElementById('borough'),favoritesOnly:document.getElementById('favoritesOnly'),favoritesNote:document.getElementById('favoritesNote'),prev:document.getElementById('prevMonth'),next:document.getElementById('nextMonth'),title:document.getElementById('monthTitle'),summary:document.getElementById('monthSummary'),grid:document.getElementById('grid'),empty:document.getElementById('empty'),modal:document.getElementById('modal'),modalTitle:document.getElementById('modalTitle'),modalSub:document.getElementById('modalSub'),modalBody:document.getElementById('modalBody'),openAuth:document.getElementById('openAuth'),accountLabel:document.getElementById('accountLabel'),logout:document.getElementById('logout'),authModal:document.getElementById('authModal'),loginTab:document.getElementById('loginTab'),signupTab:document.getElementById('signupTab'),authForm:document.getElementById('authForm'),authEmail:document.getElementById('authEmail'),authPassword:document.getElementById('authPassword'),authSubmit:document.getElementById('authSubmit'),authMessage:document.getElementById('authMessage'),toast:document.getElementById('toast')
+  };
+  els.lastUpdated.textContent=payload.lastUpdated;
 
-  const parsed = Papa.parse(csv, {
-    header: true,
-    skipEmptyLines: true
+  let session=null;
+  let favoriteIds=new Set();
+  let authMode='login';
+  let pendingFavoriteId=null;
+  let toastTimer;
+
+  function showToast(message){
+    els.toast.textContent=message;els.toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>els.toast.classList.remove('show'),2800);
+  }
+  function openAuth(message=''){
+    els.authMessage.textContent=message;els.authMessage.className='auth-message';els.authModal.classList.add('open');setTimeout(()=>els.authEmail.focus(),0);
+  }
+  function closeAuth(){els.authModal.classList.remove('open');els.authMessage.textContent='';}
+  function setAuthMode(mode){
+    authMode=mode;const signup=mode==='signup';els.loginTab.classList.toggle('active',!signup);els.signupTab.classList.toggle('active',signup);els.authSubmit.textContent=signup?'Create account':'Log in';els.authPassword.autocomplete=signup?'new-password':'current-password';els.authMessage.textContent='';
+  }
+  function updateAuthUI(){
+    const user=session?.user;
+    els.openAuth.hidden=Boolean(user);els.accountLabel.hidden=!user;els.logout.hidden=!user;
+    els.accountLabel.textContent=user?user.email:'';
+    els.favoritesOnly.disabled=!user;
+    if(!user){els.favoritesOnly.checked=false;els.favoritesNote.textContent='Log in to save races and sync them across devices.';}
+    else{els.favoritesNote.textContent=`${favoriteIds.size} saved ${favoriteIds.size===1?'race':'races'}`;}
+  }
+  async function loadFavorites(){
+    favoriteIds=new Set();
+    if(!session?.user){updateAuthUI();render();return;}
+    const {data,error}=await supabaseClient.from('race_favorites').select('race_id');
+    if(error){console.error(error);showToast('Could not load saved races.');}
+    else favoriteIds=new Set((data||[]).map(row=>String(row.race_id)));
+    updateAuthUI();render();
+  }
+  async function toggleFavorite(raceId,button){
+    if(!raceId){showToast('This race is missing its race ID.');return;}
+    if(!session?.user){pendingFavoriteId=raceId;setAuthMode('login');openAuth('Log in or create an account to save this race.');return;}
+    const wasFavorite=favoriteIds.has(raceId);
+    button?.setAttribute('disabled','');
+    if(wasFavorite){
+      const {error}=await supabaseClient.from('race_favorites').delete().eq('race_id',raceId);
+      if(error){console.error(error);showToast('Could not remove this race.');button?.removeAttribute('disabled');return;}
+      favoriteIds.delete(raceId);showToast('Removed from My Races.');
+    }else{
+      const {error}=await supabaseClient.from('race_favorites').insert({user_id:session.user.id,race_id:raceId});
+      if(error&&error.code!=='23505'){console.error(error);showToast('Could not save this race.');button?.removeAttribute('disabled');return;}
+      favoriteIds.add(raceId);showToast('Saved to My Races.');
+    }
+    updateAuthUI();render();
+    if(els.modal.classList.contains('open')){
+      const dateStr=els.modal.dataset.date;
+      if(dateStr) openDay(dateStr,filtered().filter(e=>e.date===dateStr));
+    }
+  }
+  function favoriteButton(e,extraClass=''){
+    const b=document.createElement('button');b.type='button';b.className='favorite-button '+extraClass+(favoriteIds.has(e.id)?' is-favorite':'');b.textContent=favoriteIds.has(e.id)?'★':'☆';b.setAttribute('aria-label',favoriteIds.has(e.id)?`Remove ${e.name} from My Races`:`Save ${e.name} to My Races`);b.setAttribute('aria-pressed',String(favoriteIds.has(e.id)));b.addEventListener('click',ev=>{ev.preventDefault();ev.stopPropagation();toggleFavorite(e.id,b);});return b;
+  }
+
+  els.loginTab.addEventListener('click',()=>setAuthMode('login'));
+  els.signupTab.addEventListener('click',()=>setAuthMode('signup'));
+  els.openAuth.addEventListener('click',()=>{setAuthMode('login');openAuth();});
+  els.logout.addEventListener('click',async()=>{const {error}=await supabaseClient.auth.signOut();if(error)showToast(error.message);});
+  document.querySelectorAll('[data-auth-close]').forEach(x=>x.addEventListener('click',closeAuth));
+  els.authForm.addEventListener('submit',async ev=>{
+    ev.preventDefault();els.authSubmit.disabled=true;els.authMessage.textContent='';
+    const email=els.authEmail.value.trim(),password=els.authPassword.value;
+    let result;
+    if(authMode==='signup') result=await supabaseClient.auth.signUp({email,password,options:{emailRedirectTo:window.location.origin+window.location.pathname}});
+    else result=await supabaseClient.auth.signInWithPassword({email,password});
+    els.authSubmit.disabled=false;
+    if(result.error){els.authMessage.textContent=result.error.message;els.authMessage.className='auth-message error';return;}
+    if(authMode==='signup'&&!result.data.session){els.authMessage.textContent='Check your email to confirm your account, then return here and log in.';els.authMessage.className='auth-message success';return;}
+    closeAuth();
   });
 
-  payload = {
-    lastUpdated: 'July 27, 2026',
-    events: parsed.data
-      .filter(row => String(row.hidden || '').toUpperCase() !== 'TRUE')
-      .map(row => ({
-        name: row.name || '',
-        distance: row.distance || '',
-        location: row.location || '',
-        borough: row.borough || '',
-        organizer: row.organizer || '',
-        status: row.status || '',
-        registrationUrl: row.registrationUrl || '',
-        notes: row.notes || '',
-        color: row.color || '#64748B',
-        date: row.date || '',
-        id: row.race_id || '',
-        sortOrder: row.sortOrder ? Number(row.sortOrder) : undefined
-      }))
-      .filter(e => e.name && e.date)
-  };
-} catch (error) {
-  console.error('Unable to load Google Sheet.', error);
+  const {data:{session:initialSession}}=await supabaseClient.auth.getSession();
+  session=initialSession;
+  updateAuthUI();
+  await loadFavorites();
+  supabaseClient.auth.onAuthStateChange(async(_event,newSession)=>{
+    session=newSession;
+    if(session?.user){
+      await loadFavorites();
+      if(pendingFavoriteId&&!favoriteIds.has(pendingFavoriteId)){const id=pendingFavoriteId;pendingFavoriteId=null;await toggleFavorite(id);}
+      else pendingFavoriteId=null;
+    }else{favoriteIds=new Set();updateAuthUI();render();}
+  });
 
-  payload = {
-    lastUpdated: '',
-    events: [],
-    loadFailed: true
-  };
-}
-  const events=payload.events.map(e=>({...e,dateObj:new Date(e.date+'T12:00:00')}));
-  const colors={}; events.forEach(e=>{colors[e.organizer]=e.color});
-  const els={lastUpdated:document.getElementById('lastUpdated'),search:document.getElementById('search'),organizer:document.getElementById('organizer'),month:document.getElementById('month'),distance:document.getElementById('distance'),borough:document.getElementById('borough'),prev:document.getElementById('prevMonth'),next:document.getElementById('nextMonth'),title:document.getElementById('monthTitle'),summary:document.getElementById('monthSummary'),grid:document.getElementById('grid'),empty:document.getElementById('empty'),modal:document.getElementById('modal'),modalTitle:document.getElementById('modalTitle'),modalSub:document.getElementById('modalSub'),modalBody:document.getElementById('modalBody')};
-  els.lastUpdated.textContent=payload.lastUpdated;
   const monthFmt=new Intl.DateTimeFormat('en-US',{month:'long',year:'numeric'});
   const dayFmt=new Intl.DateTimeFormat('en-US',{weekday:'long',month:'long',day:'numeric'});
   const allMonths=[...new Set(events.map(e=>e.date.slice(0,7)))].sort();
-  let currentMonth=allMonths[0];
+  let currentMonth=allMonths[0]||new Date().toISOString().slice(0,7);
   function unique(arr){return [...new Set(arr.filter(Boolean))].sort((a,b)=>a.localeCompare(b));}
-  const distanceOrder={'1500':0.93,'1600':0.99,'Mile':1,'5K':3.1,'4M':4,'5M':5,'10K':6.2,'9M':9,'15K':9.32,'10M':10,'12M':12,'Half':13.1,'18M':18,'Marathon':26.2,'Ultra':50,'Relay':90,'Track':91,'XC':92,'Trail':93,'Unsanctioned':94,'Other':99};
+  const distanceOrder={'1500':0.93,'1600':0.99,'Mile':1,'1M':1,'2M':2,'3M':3,'5K':3.1,'4M':4,'5M':5,'10K':6.2,'9M':9,'15K':9.32,'10M':10,'12M':12,'17M':17,'Half':13.1,'18M':18,'Marathon':26.2,'Ultra':50,'Relay':90,'Track':91,'XC':92,'Trail':93,'Unsanctioned':94,'Other':99};
   function sortDistances(values){return [...new Set(values.filter(Boolean))].sort((a,b)=>(distanceOrder[a]||50)-(distanceOrder[b]||50)||a.localeCompare(b));}
   function sortLocations(values){return [...new Set(values.filter(Boolean))].sort((a,b)=>{if(a==='Other')return 1;if(b==='Other')return -1;return a.localeCompare(b);});}
   const organizerCounts=new Map();events.forEach(e=>{if(e.organizer)organizerCounts.set(e.organizer,(organizerCounts.get(e.organizer)||0)+1);});
-  function isMajorOrganizer(org){return org && (organizerCounts.get(org)||0)>=3;}
+  function isMajorOrganizer(org){return org&&(organizerCounts.get(org)||0)>=3;}
   function sortOrganizers(values){return [...new Set(values.filter(isMajorOrganizer))].sort((a,b)=>(organizerCounts.get(b)||0)-(organizerCounts.get(a)||0)||a.localeCompare(b));}
-  function opt(select,items,allLabel){select.innerHTML=''; const o=document.createElement('option'); o.value=''; o.textContent=allLabel; select.appendChild(o); items.forEach(v=>{const x=document.createElement('option');x.value=v;x.textContent=(select===els.distance&&v==='Half')?'Half Marathon':v;select.appendChild(x);});}
+  function opt(select,items,allLabel){select.innerHTML='';const o=document.createElement('option');o.value='';o.textContent=allLabel;select.appendChild(o);items.forEach(v=>{const x=document.createElement('option');x.value=v;x.textContent=(select===els.distance&&v==='Half')?'Half Marathon':v;select.appendChild(x);});}
   opt(els.organizer,[...sortOrganizers(events.map(e=>e.organizer)),'Other'],'All organizers');
-  function locationTokens(v){return (v||'').split(/\s*\/\s*|\s*,\s*/).map(x=>x.trim()).filter(Boolean);}
+  function locationTokens(v){return(v||'').split(/\s*\/\s*|\s*,\s*/).map(x=>x.trim()).filter(Boolean);}
   opt(els.borough,sortLocations(events.flatMap(e=>locationTokens(e.borough))),'All locations');
   opt(els.distance,sortDistances(events.flatMap(e=>e.distance.split('/').map(s=>s.trim()))),'All distances');
   els.month.innerHTML='<option value="">All months</option>'+allMonths.map(m=>`<option value="${m}">${monthFmt.format(new Date(m+'-01T12:00:00'))}</option>`).join('');
-  function filters(){return {q:els.search.value.trim().toLowerCase(),org:els.organizer.value,mon:els.month.value,dist:els.distance.value,bor:els.borough.value};}
-  function filtered(){const f=filters();return events.filter(e=>{const hay=[e.name,e.organizer,e.location,e.borough,e.distance,e.status].join(' ').toLowerCase();const orgMatch=!f.org||(f.org==='Other'?(!isMajorOrganizer(e.organizer)):e.organizer===f.org);return (!f.q||hay.includes(f.q))&&orgMatch&&(!f.mon||e.date.startsWith(f.mon))&&(!f.bor||locationTokens(e.borough).includes(f.bor))&&(!f.dist||e.distance.split('/').map(s=>s.trim()).includes(f.dist));});}
+  function filters(){return{q:els.search.value.trim().toLowerCase(),org:els.organizer.value,mon:els.month.value,dist:els.distance.value,bor:els.borough.value,favoritesOnly:els.favoritesOnly.checked};}
+  function filtered(){const f=filters();return events.filter(e=>{const hay=[e.name,e.organizer,e.location,e.borough,e.distance,e.status].join(' ').toLowerCase();const orgMatch=!f.org||(f.org==='Other'?!isMajorOrganizer(e.organizer):e.organizer===f.org);return(!f.q||hay.includes(f.q))&&orgMatch&&(!f.mon||e.date.startsWith(f.mon))&&(!f.bor||locationTokens(e.borough).includes(f.bor))&&(!f.dist||e.distance.split('/').map(s=>s.trim()).includes(f.dist))&&(!f.favoritesOnly||favoriteIds.has(e.id));});}
   function monthEvents(all){return all.filter(e=>e.date.startsWith(currentMonth));}
-  function eventNode(e,compact=true){const a=document.createElement('a');a.className='event';a.href=e.registrationUrl||'#';a.target='_blank';a.rel='noopener';a.style.setProperty('--org',e.color||'#64748B');a.addEventListener('click',ev=>ev.stopPropagation());
-    if(e.organizer){const pill=document.createElement('span');pill.className='org-pill'+(e.organizer==='Queens Distance Runners'?' yellow':'');pill.style.setProperty('--org',e.color||'#64748B');pill.textContent=e.organizer;a.appendChild(pill);}
-    const name=document.createElement('div');name.className='race-name';name.textContent=e.name;a.appendChild(name);
-    const meta=document.createElement('div');meta.className='meta-row';const loc=e.location||e.borough;if(loc){const t=document.createElement('span');t.className='tag';t.textContent=loc;meta.appendChild(t);}if (e.status) {const s=document.createElement('span');s.className='tag status';s.textContent=e.status;meta.appendChild(s);}a.appendChild(meta);return a;}
-  function openDay(dateStr,items){const d=new Date(dateStr+'T12:00:00');els.modalTitle.textContent=dayFmt.format(d);els.modalSub.textContent=items.length+' '+(items.length===1?'race':'races');els.modalBody.innerHTML='';items.forEach(e=>{const box=document.createElement('div');box.className='detail';box.style.setProperty('--org',e.color||'#64748B');if(e.organizer){const pill=document.createElement('span');pill.className='org-pill'+(e.organizer==='Queens Distance Runners'?' yellow':'');pill.style.setProperty('--org',e.color||'#64748B');pill.textContent=e.organizer;box.appendChild(pill);}const h=document.createElement('h3');h.textContent=e.name;box.appendChild(h);const p1=document.createElement('p');p1.textContent=[e.distance,e.location,e.borough].filter(Boolean).join(' • ');box.appendChild(p1);if(e.notes){const p2=document.createElement('p');p2.textContent=e.notes;box.appendChild(p2);}if (e.status) {const p3=document.createElement('p');p3.innerHTML='<strong>Status:</strong> '+e.status;box.appendChild(p3);}if(e.registrationUrl){const reg=document.createElement('a');reg.className='register';reg.href=e.registrationUrl;reg.target='_blank';reg.rel='noopener';reg.textContent='Register / details';box.appendChild(reg);}els.modalBody.appendChild(box);});els.modal.classList.add('open');}
-  function render(){const all=filtered(); const targetMonth=els.month.value||currentMonth; if(allMonths.includes(targetMonth)) currentMonth=targetMonth; els.month.value=els.month.value||''; const date=new Date(currentMonth+'-01T12:00:00'); els.title.textContent=monthFmt.format(date); const byDate={}; monthEvents(all).forEach(e=>(byDate[e.date]||(byDate[e.date]=[])).push(e)); const count=Object.values(byDate).flat().length; els.summary.textContent=count?`${count} matching ${count===1?'race':'races'} this month`:'No matching races this month';els.prev.disabled=(allMonths.indexOf(currentMonth)<=0);els.next.disabled=(allMonths.indexOf(currentMonth)>=allMonths.length-1); els.grid.innerHTML='';
-    const y=date.getFullYear(),m=date.getMonth(); const first=new Date(y,m,1); const start=new Date(first); start.setDate(1-first.getDay()); const last=new Date(y,m+1,0); const end=new Date(last); end.setDate(last.getDate()+(6-last.getDay())); let any=false;
-    for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){const yyyy=d.getFullYear(), mm=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0'); const ds=`${yyyy}-${mm}-${dd}`; const items=(byDate[ds]||[]).sort((a,b)=>(a.sortOrder??999)-(b.sortOrder??999)||a.name.localeCompare(b.name)); if(items.length) any=true; const cell=document.createElement('div'); cell.className='day'+(d.getMonth()!==m?' out':'')+((d.getDay()===0||d.getDay()===6)?' weekend':'')+(items.length?' has-events':''); const today=new Date(); if(ds===`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`) cell.className+=' today'; const dn=document.createElement('div');dn.className='date-num';const weekday=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-dn.textContent=window.innerWidth<=640
-  ? `${weekday[d.getDay()]} ${d.getDate()}`
-  : d.getDate();cell.appendChild(dn); items.slice(0,3).forEach(e=>cell.appendChild(eventNode(e,true))); if(items.length>3){const more=document.createElement('button');more.type='button';more.className='more';more.textContent=`+${items.length-3} more`;more.addEventListener('click',ev=>{ev.stopPropagation();openDay(ds,items);});cell.appendChild(more);} if(items.length) cell.addEventListener('click',()=>openDay(ds,items)); els.grid.appendChild(cell);} els.empty.hidden = any || all.length > 0;
+  function eventNode(e){
+    const card=document.createElement('div');card.className='event';card.style.setProperty('--org',e.color||'#64748B');
+    card.appendChild(favoriteButton(e));
+    const link=document.createElement('a');link.className='event-link';link.href=e.registrationUrl||'#';link.target='_blank';link.rel='noopener';link.addEventListener('click',ev=>ev.stopPropagation());
+    if(e.organizer){const pill=document.createElement('span');pill.className='org-pill'+(e.organizer==='Queens Distance Runners'?' yellow':'');pill.style.setProperty('--org',e.color||'#64748B');pill.textContent=e.organizer;link.appendChild(pill);}
+    const name=document.createElement('div');name.className='race-name';name.textContent=e.name;link.appendChild(name);
+    const meta=document.createElement('div');meta.className='meta-row';const loc=e.location||e.borough;if(loc){const t=document.createElement('span');t.className='tag';t.textContent=loc;meta.appendChild(t);}if(e.status){const t=document.createElement('span');t.className='tag status';t.textContent=e.status;meta.appendChild(t);}link.appendChild(meta);card.appendChild(link);return card;
+  }
+  function openDay(dateStr,items){
+    const d=new Date(dateStr+'T12:00:00');els.modal.dataset.date=dateStr;els.modalTitle.textContent=dayFmt.format(d);els.modalSub.textContent=items.length+' '+(items.length===1?'race':'races');els.modalBody.innerHTML='';
+    items.forEach(e=>{const box=document.createElement('div');box.className='detail';box.style.setProperty('--org',e.color||'#64748B');if(e.organizer){const pill=document.createElement('span');pill.className='org-pill'+(e.organizer==='Queens Distance Runners'?' yellow':'');pill.style.setProperty('--org',e.color||'#64748B');pill.textContent=e.organizer;box.appendChild(pill);}const head=document.createElement('div');head.className='detail-head';const h=document.createElement('h3');h.textContent=e.name;head.appendChild(h);head.appendChild(favoriteButton(e,'detail-favorite'));box.appendChild(head);const p1=document.createElement('p');p1.textContent=[e.distance,e.location,e.borough].filter(Boolean).join(' • ');box.appendChild(p1);if(e.notes){const p2=document.createElement('p');p2.textContent=e.notes;box.appendChild(p2);}if(e.status){const p3=document.createElement('p');const strong=document.createElement('strong');strong.textContent='Status: ';p3.appendChild(strong);p3.appendChild(document.createTextNode(e.status));box.appendChild(p3);}if(e.registrationUrl){const reg=document.createElement('a');reg.className='register';reg.href=e.registrationUrl;reg.target='_blank';reg.rel='noopener';reg.textContent='Register / details';box.appendChild(reg);}els.modalBody.appendChild(box);});els.modal.classList.add('open');
+  }
+  function render(){
+    const all=filtered();const targetMonth=els.month.value||currentMonth;if(allMonths.includes(targetMonth))currentMonth=targetMonth;els.month.value=els.month.value||'';const date=new Date(currentMonth+'-01T12:00:00');els.title.textContent=monthFmt.format(date);const byDate={};monthEvents(all).forEach(e=>(byDate[e.date]||(byDate[e.date]=[])).push(e));const count=Object.values(byDate).flat().length;els.summary.textContent=count?`${count} matching ${count===1?'race':'races'} this month`:'No matching races this month';els.prev.disabled=allMonths.indexOf(currentMonth)<=0;els.next.disabled=allMonths.indexOf(currentMonth)>=allMonths.length-1;els.grid.innerHTML='';
+    const y=date.getFullYear(),m=date.getMonth(),first=new Date(y,m,1),start=new Date(first);start.setDate(1-first.getDay());const last=new Date(y,m+1,0),end=new Date(last);end.setDate(last.getDate()+(6-last.getDay()));let any=false;
+    for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){const yyyy=d.getFullYear(),mm=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0'),ds=`${yyyy}-${mm}-${dd}`;const items=(byDate[ds]||[]).sort((a,b)=>(a.sortOrder??999)-(b.sortOrder??999)||a.name.localeCompare(b.name));if(items.length)any=true;const cell=document.createElement('div');cell.className='day'+(d.getMonth()!==m?' out':'')+((d.getDay()===0||d.getDay()===6)?' weekend':'')+(items.length?' has-events':'');const today=new Date();if(ds===`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`)cell.className+=' today';const dn=document.createElement('div');dn.className='date-num';const weekday=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];dn.textContent=window.innerWidth<=640?`${weekday[d.getDay()]} ${d.getDate()}`:d.getDate();cell.appendChild(dn);items.slice(0,3).forEach(e=>cell.appendChild(eventNode(e)));if(items.length>3){const more=document.createElement('button');more.type='button';more.className='more';more.textContent=`+${items.length-3} more`;more.addEventListener('click',ev=>{ev.stopPropagation();openDay(ds,items);});cell.appendChild(more);}if(items.length)cell.addEventListener('click',()=>openDay(ds,items));els.grid.appendChild(cell);}
+    els.empty.hidden=any||all.length>0;
+    if(payload.loadFailed)els.empty.textContent='The race calendar is temporarily unavailable. Please try again in a few minutes.';
+    else if(els.favoritesOnly.checked&&favoriteIds.size===0)els.empty.textContent='You have not saved any races yet. Select a ☆ beside a race to add it to My Races.';
+    else if(els.favoritesOnly.checked)els.empty.textContent='No saved races match the current filters.';
+    else els.empty.textContent='No races match the current filters.';
+  }
 
-if (payload.loadFailed) {
-  els.empty.textContent =
-    'The race calendar is temporarily unavailable. Please try again in a few minutes.';
-} else {
-  els.empty.textContent =
-    'No races match the current filters.';
-} }
-  [els.search,els.organizer,els.month,els.distance,els.borough].forEach(el=>el.addEventListener('input',()=>{if(el===els.month&&els.month.value)currentMonth=els.month.value;render();}));
-  els.prev.addEventListener('click',()=>{let i=allMonths.indexOf(currentMonth); if(i>0){currentMonth=allMonths[i-1];els.month.value='';render();}}); els.next.addEventListener('click',()=>{let i=allMonths.indexOf(currentMonth); if(i<allMonths.length-1){currentMonth=allMonths[i+1];els.month.value='';render();}});
-  document.querySelectorAll('[data-close]').forEach(x=>x.addEventListener('click',()=>els.modal.classList.remove('open'))); document.addEventListener('keydown',e=>{if(e.key==='Escape')els.modal.classList.remove('open')});
+  [els.search,els.organizer,els.month,els.distance,els.borough,els.favoritesOnly].forEach(el=>el.addEventListener('input',()=>{if(el===els.month&&els.month.value)currentMonth=els.month.value;render();}));
+  els.prev.addEventListener('click',()=>{const i=allMonths.indexOf(currentMonth);if(i>0){currentMonth=allMonths[i-1];els.month.value='';render();}});
+  els.next.addEventListener('click',()=>{const i=allMonths.indexOf(currentMonth);if(i<allMonths.length-1){currentMonth=allMonths[i+1];els.month.value='';render();}});
+  document.querySelectorAll('[data-close]').forEach(x=>x.addEventListener('click',()=>els.modal.classList.remove('open')));
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){els.modal.classList.remove('open');closeAuth();}});
   render();
 })();
 </script>
