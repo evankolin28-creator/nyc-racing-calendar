@@ -136,7 +136,7 @@
     const response=await fetch(GOOGLE_SHEET_URL,{cache:'no-store'});
     if(!response.ok) throw new Error('Could not load Google Sheet');
     const parsed=Papa.parse(await response.text(),{header:true,skipEmptyLines:true});
-    payload={lastUpdated:'August 2, 2026',events:parsed.data
+    payload={lastUpdated:'August 9, 2026',events:parsed.data
       .filter(row=>String(row.hidden||'').toUpperCase()!=='TRUE')
       .map(row=>({
         name:row.name||'',distance:row.distance||'',location:row.location||'',borough:row.borough||'',organizer:row.organizer||'',status:row.status||'',registrationUrl:row.registrationUrl||'',notes:row.notes||'',color:row.color||'#64748B',date:row.date||'',id:row.race_id||'',sortOrder:row.sortOrder?Number(row.sortOrder):undefined
